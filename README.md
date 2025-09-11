@@ -2,7 +2,7 @@
 # Öğrenci Otomasyon Sistemi
 
 ## Proje Hakkında
-Bu proje, stajyer adayların temel bir öğrenci otomasyon sistemi geliştirmelerini hedefler. Proje, temel CRUD işlemleri, kullanıcı yönetimi, ders yönetimi ve basit raporlamaları içermektedir. Amaç, yazılım geliştirme disiplinlerini göstermek, temiz kod ve versiyon kontrol alışkanlıklarını yansıtmaktır.
+Bu proje, adayların temel bir öğrenci otomasyon sistemi geliştirmelerini hedefler. Proje, temel CRUD işlemleri, kullanıcı yönetimi, ders yönetimi ve basit raporlamaları içermektedir. Amaç, yazılım geliştirme disiplinlerini göstermek, temiz kod ve versiyon kontrol alışkanlıklarını yansıtmaktır.
 
 > **Not:** Bu proje 11.09.2025 tarihine kadar kaydedilen ilerlemeyi yansıtmaktadır. Proje tamamlanmamış özellikler içerebilir.
 
@@ -41,7 +41,7 @@ Bu proje, stajyer adayların temel bir öğrenci otomasyon sistemi geliştirmele
 
 ---
 
-## Frontend Sayfaları
+## İstenilen Frontend Sayfaları
 - Login / Register ekranları
 - Dashboard (rol bazlı içerik)
 - Öğrenci listesi ve detay sayfası
@@ -82,8 +82,8 @@ Seed Sınıfı Henüz Oluşturulmadığından Backend Çalıştırıldıkdan Son
 ## Mevcut Durum (11.09.2025)
 - Login/Register çalışıyor
 - Rol bazlı dashboard yönlendirme hazır
-- Admin: Öğrenci ve öğretmen CRUD hazır
-- Teacher: Kendi derslerini görebiliyor, öğrenci ekleme çıakrma ve değiştirme özellikelrine erişebiliyor; ders durumu değiştirme ve öğrenci atama backend yapısı hazır fakat frontend entegrasyonu tamamlanmadı
+- Admin: Öğrenci ve öğretmen CRUD hazır, öğrenci ve öğretmen listeleri hazır   
+- Teacher: Kendi derslerini görebiliyor, öğrenci ekleme çıkarma ve değiştirme özelliklerine erişebiliyor; ders durumu değiştirme ve öğrenci atama backend yapısı hazır fakat frontend entegrasyonu tamamlanmadı
 - Student: Öğrenci arayüzü tamamlanamadı
 - Not ve devamsızlık yönetimi tamamlanamadı
 
