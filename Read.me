@@ -1,1 +1,96 @@
 
+# Öğrenci Otomasyon Sistemi
+
+## Proje Hakkında
+Bu proje, stajyer adayların temel bir öğrenci otomasyon sistemi geliştirmelerini hedefler. Proje, temel CRUD işlemleri, kullanıcı yönetimi, ders yönetimi ve basit raporlamaları içermektedir. Amaç, yazılım geliştirme disiplinlerini göstermek, temiz kod ve versiyon kontrol alışkanlıklarını yansıtmaktır.
+
+> **Not:** Bu proje 11.09.2025 tarihine kadar kaydedilen ilerlemeyi yansıtmaktadır. Proje tamamlanmamış özellikler içerebilir.
+
+---
+
+## Kullanılan Teknolojiler
+
+- **Backend:** .NET 9, Entity Framework Core
+- **Frontend:** Blazor WebAssembly
+- **Veritabanı:** PostgreSQL
+- **Versiyon Kontrol:** GitHub
+
+---
+
+## Proje Gereksinimleri
+
+### Kullanıcı Yönetimi
+- Giriş (Login) ve Kayıt (Register) işlemleri
+- Roller: Admin, Teacher, Student
+
+### Öğrenci İşlemleri (CRUD)
+- Admin ve Teacher: Öğrenci ekleme, güncelleme, listeleme
+- Öğrenci: Kendi bilgilerini görüntüleme
+
+### Öğretmen İşlemleri (CRUD)
+- Admin: Öğretmen ekleme, güncelleme, listeleme
+
+### Ders Yönetimi (CRUD)
+- Admin: Ders oluşturma
+- Teacher: Kendi derslerini görüntüleme, durum değiştirme
+- Teacher: Öğrenci ekleme/çıkarma
+
+### Not ve Devamsızlık
+- Teacher: Öğrenci notları ve devamsızlık ekleme
+- Öğrenciler: Notlarını görebilir
+
+---
+
+## Frontend Sayfaları
+- Login / Register ekranları
+- Dashboard (rol bazlı içerik)
+- Öğrenci listesi ve detay sayfası
+- Öğretmen listesi
+- Ders listesi
+- Not/Devamsızlık sayfası
+
+---
+
+## Kurulum ve Çalıştırma
+
+1. **Backend**
+   - PostgreSQL veritabanını oluşturun.
+   - `appsettings.json` dosyasına bağlantı bilgilerini girin.
+   - Visual Studio veya `dotnet CLI` ile backend projesini çalıştırın:
+     ```bash
+     dotnet run --project StudentAutomation
+     ```
+
+2. **Frontend**
+   - Frontend klasörüne gidin:
+     ```bash
+     cd StudentAutomation.Frontend
+     ```
+   - Gerekli paketleri yükleyin (Blazor WebAssembly):
+     ```bash
+     dotnet restore
+     dotnet run
+     ```
+   - Tarayıcıda açılan sayfa backend’e bağlanacaktır.
+
+---
+Test Kullanıcıları:
+Seed Sınıfı Henüz Oluşturulmadığından Backend Çalıştırıldıkdan Sonra "http://localhost:5072/swagger" Linki Üzerinden Kullanıcı Oluşturulabilir
+
+---
+
+## Mevcut Durum (11.09.2025)
+- Login/Register çalışıyor
+- Rol bazlı dashboard yönlendirme hazır
+- Admin: Öğrenci ve öğretmen CRUD hazır
+- Teacher: Kendi derslerini görebiliyor, öğrenci ekleme çıakrma ve değiştirme özellikelrine erişebiliyor; ders durumu değiştirme ve öğrenci atama backend yapısı hazır fakat frontend entegrasyonu tamamlanmadı
+- Student: Öğrenci arayüzü tamamlanamadı
+- Not ve devamsızlık yönetimi tamamlanamadı
+
+---
+
+## Bonus
+- Şifre Hashleme
+- JWT token ile güvenlik ve yetkilendirme
+- Clean code prensiplerine uyulmaya çalışıldı
+- Frontend ve backend ayrı klasörlerde düzenlendi
