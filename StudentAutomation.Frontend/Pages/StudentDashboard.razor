@@ -1,0 +1,39 @@
+@page "/student-dashboard"
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+
+<h3>Öğrenci Dashboard</h3>
+
+<div class="mt-3">
+    @if (!string.IsNullOrEmpty(userName))
+    {
+        <p>Hoşgeldin, <strong>@userName</strong> 🎓</p>
+    }
+    <button class="btn btn-danger" @onclick="Logout">Çıkış Yap</button>
+</div>
+
+@code {
+    private string? userName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwtToken");
+        if (string.IsNullOrEmpty(token))
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        
+        userName = await JS.InvokeAsync<string>("localStorage.getItem", "userName");
+    }
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "jwtToken");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userName");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userRole");
+        NavManager.NavigateTo("/login");
+    }
+}

@@ -1,0 +1,158 @@
+@page "/admin-edit-user/{Id:int}"
+@using StudentAutomation.Frontend.Models
+@inject StudentAutomation.Frontend.Services.AdminService AdminService
+@inject StudentAutomation.Frontend.Services.AuthService AuthService
+@inject NavigationManager NavManager
+
+<h3>Kullanıcı Düzenle</h3>
+
+@if (isLoading)
+{
+    <p>Yükleniyor...</p>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <EditForm Model="editModel" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Ad</label>
+            <InputText class="form-control" @bind-Value="editModel.FirstName" />
+            <ValidationMessage For="@(() => editModel.FirstName)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Soyad</label>
+            <InputText class="form-control" @bind-Value="editModel.LastName" />
+            <ValidationMessage For="@(() => editModel.LastName)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <InputText class="form-control" @bind-Value="editModel.Email" />
+            <ValidationMessage For="@(() => editModel.Email)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Yeni Şifre (opsiyonel)</label>
+            <InputText class="form-control" @bind-Value="newPassword" type="password" />
+            <div class="form-text">Şifreyi değiştirmek istemiyorsanız boş bırakınız.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Rol</label>
+            <InputSelect class="form-select" @bind-Value="editModel.Role" disabled>
+                <option value="Student">Student</option>
+                <option value="Teacher">Teacher</option>
+                <option value="Admin">Admin</option>
+            </InputSelect>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                @(isSubmitting ? "Kaydediliyor..." : "Kaydet")
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">İptal</button>
+            <button type="button" class="btn btn-danger ms-auto" @onclick="ConfirmDelete">Kullanıcıyı Sil</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private UpdateUserModel editModel = new UpdateUserModel();
+    private string? newPassword;
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var role = await AuthService.GetUserRole();
+            if (role != "Admin")
+            {
+                NavManager.NavigateTo("/login");
+                return;
+            }
+
+            var user = await AdminService.GetUserById(Id);
+            if (user == null)
+            {
+                errorMessage = "Kullanıcı bulunamadı.";
+                return;
+            }
+
+            // UserModel -> RegisterModel dönüştürme
+            editModel.FirstName = user.FirstName;
+            editModel.LastName = user.LastName;
+            editModel.Email = user.Email;
+            editModel.Role = user.Role;
+            editModel.PasswordHash = ""; 
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Kullanıcı yüklenirken hata: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(newPassword))
+                editModel.PasswordHash = newPassword;
+
+            var ok = await AdminService.UpdateUser(Id, editModel);
+            if (ok)
+            {
+                NavManager.NavigateTo("/admin-dashboard");
+            }
+            else
+            {
+                errorMessage = "Güncelleme başarısız oldu. Lütfen tekrar deneyin.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Güncelleme sırasında hata: " + ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel() => NavManager.NavigateTo("/admin-dashboard");
+
+    private async Task ConfirmDelete()
+    {
+        var confirmed = await JSConfirm("Bu kullanıcıyı silmek istediğinizden emin misiniz?");
+        if (confirmed)
+        {
+            var deleted = await AdminService.DeleteUser(Id);
+            if (deleted)
+                NavManager.NavigateTo("/admin-dashboard");
+            else
+                errorMessage = "Silme işlemi başarısız oldu.";
+        }
+    }
+
+    private async Task<bool> JSConfirm(string msg) => await Task.FromResult(true);
+}

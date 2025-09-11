@@ -1,0 +1,203 @@
+@page "/teacher-dashboard"
+@using StudentAutomation.Frontend.Models
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+@inject StudentAutomation.Frontend.Services.TeacherService TeacherService
+
+<h3>Öğretmen Dashboard</h3>
+
+<div class="mt-3">
+    @if (!string.IsNullOrEmpty(userName))
+    {
+        <p>Hoşgeldin, <strong>@userName</strong> 👨‍🏫</p>
+    }
+</div>
+
+<h5>Yeni Öğrenci Ekle</h5>
+<EditForm Model="newStudent" OnValidSubmit="HandleCreateStudent">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="row g-2">
+        <div class="col-md-3">
+            <InputText class="form-control" placeholder="Ad" @bind-Value="newStudent.FirstName" />
+        </div>
+        <div class="col-md-3">
+            <InputText class="form-control" placeholder="Soyad" @bind-Value="newStudent.LastName" />
+        </div>
+        <div class="col-md-3">
+            <InputText class="form-control" placeholder="Email" @bind-Value="newStudent.Email" />
+        </div>
+        <div class="col-md-3">
+            <InputText class="form-control" placeholder="Şifre" type="password" @bind-Value="newStudent.PasswordHash" />
+        </div>
+    </div>
+
+    <InputText class="form-control mt-2" Value="Student" Disabled="true" />
+
+    <button type="submit" class="btn btn-success mt-2" disabled="@isCreating">
+        @(isCreating ? "Oluşturuluyor..." : "Yeni Öğrenci Oluştur")
+    </button>
+
+    @if (!string.IsNullOrEmpty(createError))
+    {
+        <div class="alert alert-danger mt-2">@createError</div>
+    }
+    @if (!string.IsNullOrEmpty(createSuccess))
+    {
+        <div class="alert alert-success mt-2">@createSuccess</div>
+    }
+</EditForm>
+
+<h5>Mevcut Öğrenciler</h5>
+<table class="table table-striped mt-3">
+    <thead>
+        <tr>
+            <th>Ad</th>
+            <th>Soyad</th>
+            <th>Email</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (students != null)
+        {
+            @foreach (var s in students)
+            {
+                <tr>
+                    <td><InputText class="form-control" @bind-Value="s.FirstName" /></td>
+                    <td><InputText class="form-control" @bind-Value="s.LastName" /></td>
+                    <td><InputText class="form-control" @bind-Value="s.Email" /></td>
+                    <td>
+                        <button class="btn btn-sm btn-success me-2" @onclick="() => SaveStudent(s)">Kaydet</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteStudent(s.Id)">Sil</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<h5>Öğretmen Dersleri</h5>
+<table class="table table-hover mt-3">
+    <thead>
+        <tr>
+            <th>Ders Adı</th>
+            <th>Durum</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (myCourses != null)
+        {
+            @foreach (var c in myCourses)
+            {
+                <tr style="cursor:pointer" @onclick="() => OpenCourse(c.Id)">
+                    <td>@c.Name</td>
+                    <td>@c.Status</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private string? userName;
+    private List<UserModel>? students;
+    private RegisterModel newStudent = new RegisterModel { Role = "Student" };
+    private bool isCreating = false;
+    private string? createError;
+    private string? createSuccess;
+
+    private List<CourseModel>? myCourses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwtToken");
+        if (string.IsNullOrEmpty(token))
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        userName = await JS.InvokeAsync<string>("localStorage.getItem", "userName");
+        await LoadStudents();
+        await LoadMyCourses();
+    }
+
+    private async Task LoadStudents()
+    {
+        students = (await TeacherService.GetStudents()).ToList();
+    }
+
+    private async Task LoadMyCourses()
+    {
+        myCourses = (await TeacherService.GetMyCourses()).ToList();
+    }
+
+    private void OpenCourse(int courseId)
+    {
+        NavManager.NavigateTo($"/course-detail/{courseId}");
+    }
+
+    private async Task HandleCreateStudent()
+    {
+        isCreating = true;
+        createError = null;
+        createSuccess = null;
+        try
+        {
+            newStudent.Role = "Student";
+            var result = await TeacherService.CreateStudent(newStudent);
+
+            if (result)
+            {
+                createSuccess = "Öğrenci başarıyla oluşturuldu!";
+                newStudent = new RegisterModel { Role = "Student" };
+                await LoadStudents();
+            }
+            else
+            {
+                createError = "Öğrenci oluşturulamadı.";
+            }
+        }
+        catch (Exception ex)
+        {
+            createError = ex.Message;
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private async Task SaveStudent(UserModel student)
+    {
+        var updateModel = new UpdateUserModel
+        {
+            FirstName = student.FirstName,
+            LastName = student.LastName,
+            Email = student.Email,
+            Role = "Student",
+            PasswordHash = ""
+        };
+
+        var result = await TeacherService.UpdateStudent(student.Id, updateModel);
+        if (result) await LoadStudents();
+    }
+
+    private async Task DeleteStudent(int id)
+    {
+        var result = await TeacherService.DeleteStudent(id);
+        if (result)
+        {
+            await LoadStudents();
+        }
+    }
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "jwtToken");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userName");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userRole");
+        NavManager.NavigateTo("/login");
+    }
+}

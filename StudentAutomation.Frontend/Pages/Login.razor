@@ -1,0 +1,60 @@
+@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using StudentAutomation.Frontend.Services
+@inject AuthService AuthService
+@inject IJSRuntime JS
+
+@inject NavigationManager NavManager
+@using StudentAutomation.Frontend.Models
+<h3 class="text-center mb-4">Giriş Yap</h3>
+
+<div class="d-flex justify-content-center">
+    <div class="card shadow p-4" style="width: 350px; border-radius: 15px;">
+        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <InputText @bind-Value="loginModel.Email" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Şifre</label>
+                <InputText @bind-Value="loginModel.PasswordHash" type="password" class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 rounded-pill">Giriş Yap</button>
+            <div class="text-center mt-3">
+                <a href="/register">Hesabın yok mu? Kayıt ol</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+
+    private async Task HandleLogin()
+    {
+        var result = await AuthService.Login(loginModel.Email, loginModel.PasswordHash);
+        Console.WriteLine(result);
+        if (result != null)
+        {
+            
+            var role = result.Role;
+            if (role == "Admin")
+                NavManager.NavigateTo("/admin-dashboard");
+            else if (role == "Teacher")
+                NavManager.NavigateTo("/teacher-dashboard"); 
+            else
+                NavManager.NavigateTo("/student-dashboard");
+        }
+        else
+        {
+            Console.WriteLine("Login Failed");
+        }
+    }
+
+
+}

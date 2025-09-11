@@ -1,0 +1,110 @@
+﻿@inject StudentAutomation.Frontend.Services.AuthService AuthService
+@inject NavigationManager NavManager
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#" @onclick="GoHome" @onclick:preventDefault="true">
+            Öğrenci Otomasyon Sistemi
+        </a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <a class="nav-link" href="" @onclick="GoHome" @onclick:preventDefault="true">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Ana Sayfa
+            </a>
+        </div>
+
+        @if (!isLoggedIn)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="login">
+                    <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span> Giriş Yap
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="register">
+                    <span class="bi bi-person-plus" aria-hidden="true"></span> Kayıt Ol
+                </NavLink>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
+                <a class="nav-link" href="" @onclick="Logout">
+                    <span class="bi bi-box-arrow-right" aria-hidden="true"></span> Çıkış Yap
+                </a>
+            </div>
+        }
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private bool isLoggedIn = false;
+    private string? userRole;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // AuthService değişikliklerini dinle
+        AuthService.OnChange += UpdateNavMenu;
+
+        // İlk durum
+        isLoggedIn = await AuthService.IsLoggedIn();
+        if (isLoggedIn)
+            userRole = await AuthService.GetUserRole();
+    }
+
+    private void UpdateNavMenu()
+    {
+        // AuthService değiştiğinde UI güncellensin
+        InvokeAsync(async () =>
+        {
+            isLoggedIn = await AuthService.IsLoggedIn();
+            if (isLoggedIn)
+                userRole = await AuthService.GetUserRole();
+            StateHasChanged();
+        });
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.Logout();
+        // Logout sonrası UI otomatik güncellenir
+        NavManager.NavigateTo("/login", forceLoad: true);
+    }
+
+    private void GoHome()
+    {
+        if (!isLoggedIn)
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        switch (userRole)
+        {
+            case "Admin":
+                NavManager.NavigateTo("/admin-dashboard");
+                break;
+            case "Teacher":
+                NavManager.NavigateTo("/teacher-dashboard");
+                break;
+            case "Student":
+                NavManager.NavigateTo("/student-dashboard");
+                break;
+            default:
+                NavManager.NavigateTo("/login");
+                break;
+        }
+    }
+}

@@ -1,0 +1,80 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@using StudentAutomation.Frontend.Services
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+@using StudentAutomation.Frontend.Models
+<h3 class="text-center mb-4">Kayıt Ol</h3>
+
+<div class="d-flex justify-content-center">
+    <div class="card shadow p-4" style="width: 350px; border-radius: 15px;">
+        <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Ad</label>
+                <InputText @bind-Value="registerModel.FirstName" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Soyad</label>
+                <InputText @bind-Value="registerModel.LastName" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <InputText @bind-Value="registerModel.Email" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Şifre</label>
+                <InputText @bind-Value="registerModel.PasswordHash" type="password" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Rol</label>
+                <InputSelect @bind-Value="registerModel.Role" class="form-select">
+                    <option value="">Seçiniz</option>
+                    <option value="Student">Öğrenci</option>
+                    <option value="Teacher">Öğretmen</option>
+                    <option value="Admin">Admin</option>
+                </InputSelect>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 rounded-pill">Kayıt Ol</button>
+            <div class="text-center mt-3">
+                <a href="/login">Hesabın var mı? Giriş yap</a>
+            </div>
+        </EditForm>
+         @* Backend hatasını kullanıcıya göster *@
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger mt-3">@errorMessage</div>
+        }
+    </div>
+</div>
+
+
+
+@code {
+    private RegisterModel registerModel = new();
+    private string? errorMessage;
+
+    private async Task HandleRegister()
+    {
+        errorMessage = await AuthService.Register(registerModel);
+        if (string.IsNullOrEmpty(errorMessage))
+        {
+            // Kayıt başarılı
+            Console.WriteLine("Register Success!");
+            NavManager.NavigateTo("/login");
+        }
+        else
+        {
+            // Backend hatası burada kullanıcıya gösterilecek
+            Console.WriteLine($"Register Failed: {errorMessage}");
+        }
+    }
+
+}

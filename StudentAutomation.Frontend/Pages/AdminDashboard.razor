@@ -1,0 +1,325 @@
+@page "/admin-dashboard"
+@using StudentAutomation.Frontend.Models
+@inject StudentAutomation.Frontend.Services.AuthService AuthService
+@inject NavigationManager NavManager
+@inject StudentAutomation.Frontend.Services.AdminService AdminService
+@inject StudentAutomation.Frontend.Services.CourseService CourseService
+
+<h3>Admin Sayfası</h3>
+
+<div class="mt-3">
+    <p>Hoşgeldiniz, @userName!</p>
+</div>
+
+<h5>Yeni Kullanıcı Ekle</h5>
+<EditForm Model="newUser" OnValidSubmit="HandleCreateUser">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="row g-2">
+        <div class="col-md-3">
+            <InputText class="form-control" placeholder="Ad" @bind-Value="newUser.FirstName" />
+            <ValidationMessage For="@(() => newUser.FirstName)" />
+        </div>
+        <div class="col-md-3">
+            <InputText class="form-control" placeholder="Soyad" @bind-Value="newUser.LastName" />
+            <ValidationMessage For="@(() => newUser.LastName)" />
+        </div>
+        <div class="col-md-3">
+            <InputText class="form-control" placeholder="Email" @bind-Value="newUser.Email" />
+            <ValidationMessage For="@(() => newUser.Email)" />
+        </div>
+        <div class="col-md-3">
+            <InputText class="form-control" placeholder="Şifre" type="password" @bind-Value="newUser.PasswordHash" />
+            <ValidationMessage For="@(() => newUser.PasswordHash)" />
+        </div>
+    </div>
+
+    <div class="mt-2">
+        <InputSelect class="form-select w-25" @bind-Value="newUser.Role">
+            <option value="">Rol seçiniz</option>
+            <option value="Student">Student</option>
+            <option value="Teacher">Teacher</option>
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-2" disabled="@isCreating">
+        @(isCreating ? "Oluşturuluyor..." : "Yeni Kullanıcı Oluştur")
+    </button>
+
+    @if (!string.IsNullOrEmpty(createError))
+    {
+        <div class="alert alert-danger mt-2">@createError</div>
+    }
+</EditForm>
+
+<div class="row mt-3 mb-3 g-2">
+    <div class="col-md-5">
+        <input class="form-control" placeholder="İsme göre ara..." @bind="searchName" />
+    </div>
+    <div class="col-md-5">
+        <input class="form-control" placeholder="Email’e göre ara..." @bind="searchEmail" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100" @onclick="SearchUsers">Ara</button>
+    </div>
+</div>
+
+<h5>Öğrenciler</h5>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Ad</th>
+            <th>Soyad</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (filteredStudents != null)
+        {
+            @foreach (var student in filteredStudents)
+            {
+                <tr>
+                    <td>@student.FirstName</td>
+                    <td>@student.LastName</td>
+                    <td>@student.Email</td>
+                    <td>@student.Role</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-2" @onclick="() => EditUser(student)">Düzenle</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(student.Id)">Sil</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<h5>Öğretmenler</h5>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Ad</th>
+            <th>Soyad</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (filteredTeachers != null)
+        {
+            @foreach (var teacher in filteredTeachers)
+            {
+                <tr>
+                    <td>@teacher.FirstName</td>
+                    <td>@teacher.LastName</td>
+                    <td>@teacher.Email</td>
+                    <td>@teacher.Role</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-2" @onclick="() => EditUser(teacher)">Düzenle</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(teacher.Id)">Sil</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<h5>Dersler</h5>
+@if (!string.IsNullOrEmpty(courseMessage))
+{
+    <div class="alert alert-success">@courseMessage</div>
+}
+<table class="table table-striped mt-3">
+    <thead>
+        <tr>
+            <th>Ad</th>
+            <th>Öğretmen</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (courses != null)
+        {
+            @foreach (var c in courses)
+            {
+                <tr>
+                    <td>
+                        <InputText class="form-control" @bind-Value="c.Name" />
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <!-- Mevcut öğretmen adı -->
+                            <span class="me-2">
+                                @(string.IsNullOrWhiteSpace(c.TeacherName) ? "Atanmamış" : c.TeacherName)
+                            </span>
+
+                            <!-- Dropdown ile öğretmen değişimi -->
+                            <InputSelect class="form-select" style="width: auto;" @bind-Value="c.TeacherId">
+                                <option value="">Öğretmen seçiniz</option>
+                                @if (teachers != null)
+                                {
+                                    @foreach (var t in teachers)
+                                    {
+                                        <option value="@t.Id">@t.FirstName @t.LastName</option>
+                                    }
+                                }
+                            </InputSelect>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success me-2" @onclick="() => SaveCourse(c)">Kaydet</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteCourse(c.Id)">Sil</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+@code {
+    private string userName = "";
+    private string searchName = "";
+    private string searchEmail = "";
+    private string courseMessage = "";
+
+    private List<UserModel>? students;
+    private List<UserModel>? filteredStudents;
+
+    private List<UserModel>? teachers;
+    private List<UserModel>? filteredTeachers;
+
+    private RegisterModel newUser = new RegisterModel();
+    private bool isCreating = false;
+    private string? createError;
+
+    private List<CourseModel>? courses;
+    private CourseModel newCourse = new CourseModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        userName = await AuthService.GetUserName();
+        await LoadUsers();
+        await LoadCourses();
+    }
+
+    private async Task LoadUsers()
+    {
+        students = await AdminService.GetUsers("Student");
+        filteredStudents = new List<UserModel>(students);
+
+        teachers = await AdminService.GetUsers("Teacher");
+        filteredTeachers = new List<UserModel>(teachers);
+    }
+
+    private void SearchUsers()
+    {
+        filteredStudents = students
+            .Where(u => (string.IsNullOrWhiteSpace(searchName) || u.FirstName.Contains(searchName, StringComparison.OrdinalIgnoreCase) || u.LastName.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+                     && (string.IsNullOrWhiteSpace(searchEmail) || u.Email.Contains(searchEmail, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        filteredTeachers = teachers
+            .Where(u => (string.IsNullOrWhiteSpace(searchName) || u.FirstName.Contains(searchName, StringComparison.OrdinalIgnoreCase) || u.LastName.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+                     && (string.IsNullOrWhiteSpace(searchEmail) || u.Email.Contains(searchEmail, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+    }
+
+    private void EditUser(UserModel user) => NavManager.NavigateTo($"/admin-edit-user/{user.Id}");
+
+    private async Task DeleteUser(int id)
+    {
+        bool success = await AdminService.DeleteUser(id);
+        if (success) await LoadUsers();
+    }
+
+    private async Task HandleCreateUser()
+    {
+        isCreating = true;
+        createError = null;
+        try
+        {
+            var result = await AdminService.CreateUser(newUser);
+            if (result)
+            {
+                newUser = new RegisterModel();
+                await LoadUsers();
+            }
+            else
+            {
+                createError = "Kullanıcı oluşturulamadı. Lütfen tekrar deneyin.";
+            }
+        }
+        catch (Exception ex)
+        {
+            createError = "Oluşturma sırasında hata: " + ex.Message;
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private async Task LoadCourses()
+    {
+        courses = (await CourseService.GetCourses()).ToList();
+    }
+
+    private async Task HandleCreateCourse()
+    {
+        if (string.IsNullOrWhiteSpace(newCourse.Name))
+            return; 
+
+        bool success = await CourseService.CreateCourse(new CreateCourseDto
+            {
+                Name = newCourse.Name,
+                TeacherId = newCourse.TeacherId
+            });
+        if (success)
+        {
+            newCourse = new CourseModel();
+            await LoadCourses();
+        }
+    }
+    private async Task SaveCourse(CourseModel course)
+    {
+        if (string.IsNullOrWhiteSpace(course.Name) )
+        {
+            courseMessage = "Ders adı seçimi zorunludur!";
+            return;
+        }
+
+        var success = await CourseService.UpdateCourseAsync(course.Id, new CourseUpdateDto
+            {
+                Name = course.Name,
+                TeacherId = course.TeacherId
+            });
+
+        if (success)
+        {
+            courseMessage = "Ders başarıyla güncellendi!";
+            await LoadCourses(); 
+        }
+        else
+        {
+            courseMessage = "Ders güncellenirken hata oluştu!";
+            Console.WriteLine("Ders güncellenemedi!");
+        }
+    }
+
+
+    private async Task DeleteCourse(int id)
+    {
+        var success = await CourseService.DeleteCourse(id);
+        if (success) await LoadCourses();
+    }
+
+    private async Task AssignTeacher(int courseId, int? teacherId)
+    {
+        if (teacherId == null) return;
+        var success = await CourseService.AssignTeacher(courseId, teacherId.Value);
+        if (success) await LoadCourses();
+    }
+}
