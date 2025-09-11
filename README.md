@@ -75,7 +75,7 @@ Bu proje, stajyer adayların temel bir öğrenci otomasyon sistemi geliştirmele
 
 ---
 Test Kullanıcıları:
-Seed Sınıfı Henüz Oluşturulmadığından Backend Çalıştırıldıkdan Sonra "http://localhost:5072/swagger" Linki Üzerinden Kullanıcı Oluşturulabilir
+Seed Sınıfı Henüz Oluşturulmadığından Backend Çalıştırıldıkdan Sonra "http://localhost:{PORT}/swagger" Linki Üzerinden Kullanıcı Oluşturulabilir
 
 ---
 
