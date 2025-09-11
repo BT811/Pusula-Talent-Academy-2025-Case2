@@ -1,0 +1,1 @@
+# Pusula-Talent-Academy-2025-Case2
